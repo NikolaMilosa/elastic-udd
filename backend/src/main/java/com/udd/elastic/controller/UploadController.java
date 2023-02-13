@@ -18,6 +18,7 @@ import com.udd.elastic.model.Letter;
 import com.udd.elastic.repository.CVRepository;
 import com.udd.elastic.repository.ClientRepository;
 import com.udd.elastic.repository.LetterRepository;
+import com.udd.elastic.validator.EducationValidator;
 
 @RestController
 @RequestMapping("/api/upload")
@@ -26,13 +27,15 @@ public class UploadController {
     final ClientRepository clientRepository;
     final CVRepository cvRepository;
     final LetterRepository letterRepository;
+    final EducationValidator educationValidator;
 
     @Autowired
     public UploadController(ClientRepository clientRepository, CVRepository cvRepository,
-            LetterRepository letterRepository) {
+            LetterRepository letterRepository, EducationValidator validator) {
         this.clientRepository = clientRepository;
         this.cvRepository = cvRepository;
         this.letterRepository = letterRepository;
+        this.educationValidator = validator;
     }
 
     @PostMapping
@@ -41,14 +44,20 @@ public class UploadController {
             return ResponseEntity.badRequest().body("Invalid request");
         }
 
+        if (!educationValidator.validateEducation(contract.getEducation().toLowerCase())){
+            return ResponseEntity.badRequest().body("Invalid education");
+        }
+
         var cv = Base64.getEncoder().encodeToString(contract.getCv().getBytes());
         var letter = Base64.getEncoder().encodeToString(contract.getLetter().getBytes());
 
         var client = new Client();
-        client.setFirstname(contract.getFirstname());
-        client.setLastname(contract.getLastname());
-        client.setAddress(contract.getAddress());
-        client.setEmail(contract.getEmail());
+        client.setFirstname(contract.getFirstname().trim().toLowerCase());
+        client.setLastname(contract.getLastname().trim().toLowerCase());
+        client.setAddress(contract.getAddress().trim());
+        client.setEmail(contract.getEmail().trim());
+        client.setPhone(contract.getPhone().trim());
+        client.setEducation(contract.getEducation().trim().toLowerCase());
 
         clientRepository.save(client);
 
@@ -74,6 +83,8 @@ public class UploadController {
         contract.getEmail() == null || contract.getEmail().isBlank() ||
         contract.getAddress() == null || contract.getAddress().isBlank() ||
         contract.getCv() == null || contract.getCv().getSize() == 0 ||
-        contract.getLetter() == null || contract.getLetter().getSize() == 0);
+        contract.getLetter() == null || contract.getLetter().getSize() == 0 ||
+        contract.getPhone() == null || contract.getPhone().isBlank() ||
+        contract.getEducation() == null || contract.getEducation().isBlank());
     }
 }

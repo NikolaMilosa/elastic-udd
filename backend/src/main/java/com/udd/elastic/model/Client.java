@@ -32,4 +32,10 @@ public class Client {
 
     @GeoPointField
     private GeoPoint location;
+
+    @Field(type = FieldType.Text, index = false, store = true)
+    private String phone;
+
+    @Field(type = FieldType.Text, store = true)
+    private String education;
 }

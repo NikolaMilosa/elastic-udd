@@ -43,12 +43,7 @@ up: ## Runs the elastic search container with kibana
 .PHONY: down
 down: ## Removes the containers
 	$(CONTAINER_TOOL)-compose -f docker-compose.yaml down
-
-.PHONY: install
-install: ## Install dependancies
-	cd ./backend
-	./mvnw install
-
+	
 .PHONY: run
 run: ## Run the backend
 	cd ./backend

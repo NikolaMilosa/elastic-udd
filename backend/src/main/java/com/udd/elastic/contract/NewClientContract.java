@@ -20,4 +20,8 @@ public class NewClientContract implements Serializable {
     private MultipartFile cv;
 
     private MultipartFile letter;
+
+    private String phone;
+    
+    private String education;
 }
