@@ -1,9 +1,5 @@
 package com.udd.elastic.controller;
 
-import java.io.IOException;
-import java.util.Base64;
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -12,12 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.udd.elastic.contract.NewClientContract;
-import com.udd.elastic.model.CV;
 import com.udd.elastic.model.Client;
-import com.udd.elastic.model.Letter;
-import com.udd.elastic.repository.CVRepository;
 import com.udd.elastic.repository.ClientRepository;
-import com.udd.elastic.repository.LetterRepository;
+import com.udd.elastic.service.IndexerService;
 import com.udd.elastic.validator.EducationValidator;
 
 @RestController
@@ -25,21 +18,18 @@ import com.udd.elastic.validator.EducationValidator;
 public class UploadController {
     
     final ClientRepository clientRepository;
-    final CVRepository cvRepository;
-    final LetterRepository letterRepository;
     final EducationValidator educationValidator;
+    final IndexerService indexerService;
 
     @Autowired
-    public UploadController(ClientRepository clientRepository, CVRepository cvRepository,
-            LetterRepository letterRepository, EducationValidator validator) {
+    public UploadController(ClientRepository clientRepository, EducationValidator validator, IndexerService indexerService) {
         this.clientRepository = clientRepository;
-        this.cvRepository = cvRepository;
-        this.letterRepository = letterRepository;
         this.educationValidator = validator;
+        this.indexerService = indexerService;
     }
 
     @PostMapping
-    public ResponseEntity<?> upload(@ModelAttribute NewClientContract contract) throws IOException {
+    public ResponseEntity<?> upload(@ModelAttribute NewClientContract contract) {
         if (!validateContract(contract)){
             return ResponseEntity.badRequest().body("Invalid request");
         }
@@ -47,9 +37,6 @@ public class UploadController {
         if (!educationValidator.validateEducation(contract.getEducation().toLowerCase())){
             return ResponseEntity.badRequest().body("Invalid education");
         }
-
-        var cv = Base64.getEncoder().encodeToString(contract.getCv().getBytes());
-        var letter = Base64.getEncoder().encodeToString(contract.getLetter().getBytes());
 
         var client = new Client();
         client.setFirstname(contract.getFirstname().trim().toLowerCase());
@@ -59,20 +46,12 @@ public class UploadController {
         client.setPhone(contract.getPhone().trim());
         client.setEducation(contract.getEducation().trim().toLowerCase());
 
-        clientRepository.save(client);
+        clientRepository.save(client);        
 
-        var cvObject = new CV();
-        cvObject.setClient(client);
-        cvObject.setContent(cv);
-
-        cvRepository.save(cvObject);
-
-        var letterObject = new Letter();
-        letterObject.setClient(client);
-        letterObject.setContent(letter);
-
-        letterRepository.save(letterObject);
-        
+        if (!indexerService.add(client, contract.getCv(), contract.getLetter())){
+            clientRepository.delete(client);
+            return ResponseEntity.badRequest().body("Failed to parse cv or letter");
+        }
 
         return ResponseEntity.ok("successful");
     }

@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.udd.elastic.model.CV;
 import com.udd.elastic.model.Client;
+import com.udd.elastic.model.Letter;
 import com.udd.elastic.validator.EducationValidator;
 
 @RestController
@@ -81,6 +83,39 @@ public class QueryController {
         var found = new ArrayList<Client>();
 
         for (var hint : clients.getSearchHits()){
+            found.add(hint.getContent());
+        }
+
+        return ResponseEntity.ok(found);
+    }
+
+    @GetMapping("/cv/{query}/{page}")
+    public ResponseEntity<?> queryCv(@PathVariable(name = "query") String query, @PathVariable(name = "page") int page) {
+        var searchQuery = new NativeSearchQueryBuilder()
+            .withFilter(new RegexpQueryBuilder("content", ".*" + query + ".*"))
+            .build();
+
+        var cvs = elasticsearchOperations.search(searchQuery, CV.class);
+        var found = new ArrayList<CV>();
+
+        for (var hint : cvs.getSearchHits()){
+            found.add(hint.getContent());
+        }
+
+        return ResponseEntity.ok(found);
+    }
+
+
+    @GetMapping("/letter/{query}/{page}")
+    public ResponseEntity<?> queryLetter(@PathVariable(name = "query") String query, @PathVariable(name = "page") int page) {
+        var searchQuery = new NativeSearchQueryBuilder()
+            .withFilter(new RegexpQueryBuilder("content", ".*" + query + ".*"))
+            .build();
+
+        var cvs = elasticsearchOperations.search(searchQuery, Letter.class);
+        var found = new ArrayList<Letter>();
+
+        for (var hint : cvs.getSearchHits()){
             found.add(hint.getContent());
         }
 
