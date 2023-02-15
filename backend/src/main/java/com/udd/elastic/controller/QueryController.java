@@ -1,70 +1,47 @@
 package com.udd.elastic.controller;
 
-import java.util.ArrayList;
-
-import org.elasticsearch.index.query.RegexpQueryBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.udd.elastic.contract.AdvancedSearchRequest;
 import com.udd.elastic.model.CV;
 import com.udd.elastic.model.Client;
 import com.udd.elastic.model.Letter;
+import com.udd.elastic.service.AdvancedQueryService;
+import com.udd.elastic.service.SimpleQueryService;
 import com.udd.elastic.validator.EducationValidator;
 
 @RestController
 @RequestMapping("/api/query")
 public class QueryController {
     
-    final ElasticsearchOperations elasticsearchOperations;
     final EducationValidator educationValidator;
+    final SimpleQueryService simpleQueryService;
+    final AdvancedQueryService advancedQueryService;
 
     @Autowired
-    public QueryController(ElasticsearchOperations operations, EducationValidator validator) {
-        this.elasticsearchOperations = operations;
+    public QueryController(EducationValidator validator, SimpleQueryService simpleQueryService, AdvancedQueryService advancedQueryService) {
         this.educationValidator = validator;
+        this.simpleQueryService = simpleQueryService;
+        this.advancedQueryService = advancedQueryService;
     }
     
     @GetMapping("/firstname/{firstname}/{page}")
     public Iterable<Client> queryFirstname(@PathVariable(name = "firstname") String firstname,
         @PathVariable(name = "page") int page) {
-
-        var searchQuery = new NativeSearchQueryBuilder()
-            .withFilter(new RegexpQueryBuilder("firstname", ".*" + firstname.trim().toLowerCase() + ".*"))
-            .build();
-        
-        var clients = elasticsearchOperations.search(searchQuery, Client.class);
-        var found = new ArrayList<Client>();
-
-        for (var hint : clients.getSearchHits()){
-            System.out.println("Found");
-            found.add(hint.getContent());
-        }
-
-        return found;
+        return simpleQueryService.query(Client.class, "firstname", firstname, page);
     }
     
     @GetMapping("/lastname/{lastname}/{page}")
     public Iterable<Client> queryLastname(@PathVariable(name = "lastname") String lastname,
         @PathVariable(name = "page") int page) {
-        
-        var searchQuery = new NativeSearchQueryBuilder()
-            .withFilter(new RegexpQueryBuilder("lastname", ".*" + lastname.trim().toLowerCase() + ".*"))
-            .build();
-        
-        var clients = elasticsearchOperations.search(searchQuery, Client.class);
-        var found = new ArrayList<Client>();
-
-        for (var hint : clients.getSearchHits()){
-            found.add(hint.getContent());
-        }
-
-        return found;
+        return simpleQueryService.query(Client.class, "lastname", lastname, page);
     }
 
     @GetMapping("/education/{education}/{page}")
@@ -75,50 +52,50 @@ public class QueryController {
             return ResponseEntity.badRequest().body("Invalid education");
         }
 
-        var searchQuery = new NativeSearchQueryBuilder()
-            .withFilter(new RegexpQueryBuilder("education", education.trim().toLowerCase()))
-            .build();
-        
-        var clients = elasticsearchOperations.search(searchQuery, Client.class);
-        var found = new ArrayList<Client>();
-
-        for (var hint : clients.getSearchHits()){
-            found.add(hint.getContent());
-        }
-
-        return ResponseEntity.ok(found);
+        return ResponseEntity.ok(simpleQueryService.query(Client.class, "education", education, page));
     }
 
     @GetMapping("/cv/{query}/{page}")
-    public ResponseEntity<?> queryCv(@PathVariable(name = "query") String query, @PathVariable(name = "page") int page) {
-        var searchQuery = new NativeSearchQueryBuilder()
-            .withFilter(new RegexpQueryBuilder("content", ".*" + query + ".*"))
-            .build();
-
-        var cvs = elasticsearchOperations.search(searchQuery, CV.class);
-        var found = new ArrayList<CV>();
-
-        for (var hint : cvs.getSearchHits()){
-            found.add(hint.getContent());
-        }
-
-        return ResponseEntity.ok(found);
+    public Iterable<CV> queryCv(@PathVariable(name = "query") String query, @PathVariable(name = "page") int page) {
+        return simpleQueryService.query(CV.class, "content", query, page);
     }
 
-
     @GetMapping("/letter/{query}/{page}")
-    public ResponseEntity<?> queryLetter(@PathVariable(name = "query") String query, @PathVariable(name = "page") int page) {
-        var searchQuery = new NativeSearchQueryBuilder()
-            .withFilter(new RegexpQueryBuilder("content", ".*" + query + ".*"))
-            .build();
+    public Iterable<Letter> queryLetter(@PathVariable(name = "query") String query, @PathVariable(name = "page") int page) {
+        return simpleQueryService.query(Letter.class, "content", query, page);
+    }
 
-        var cvs = elasticsearchOperations.search(searchQuery, Letter.class);
-        var found = new ArrayList<Letter>();
-
-        for (var hint : cvs.getSearchHits()){
-            found.add(hint.getContent());
+    @PostMapping("/advanced/{page}/cv")
+    public ResponseEntity<?> queryAdvancedCV(@PathVariable(name = "page") int page, @RequestBody AdvancedSearchRequest request){
+        if (!validateAdvancedRequest(request)){
+            return ResponseEntity.badRequest().body("Invalid request");
         }
 
-        return ResponseEntity.ok(found);
+        return ResponseEntity.ok(advancedQueryService.query(CV.class, request, page));
+    }
+
+    @PostMapping("/advanced/{page}/letter")
+    public ResponseEntity<?> queryAdvancedLetter(@PathVariable(name = "page") int page, @RequestBody AdvancedSearchRequest request){
+        if (!validateAdvancedRequest(request)){
+            return ResponseEntity.badRequest().body("Invalid request");
+        }
+
+        return ResponseEntity.ok(advancedQueryService.query(Letter.class, request, page));
+    }
+
+    private boolean validateAdvancedRequest(AdvancedSearchRequest request){
+        if (request == null || request.query == null || request.query.isEmpty()){
+            return false;
+        }
+
+        for (var booleanRequest : request.getQuery()){
+            if (booleanRequest.getField() == null || booleanRequest.getField().isBlank() ||
+                booleanRequest.getValue() == null || booleanRequest.getValue().isBlank() ||
+                booleanRequest.getOperator() == null || booleanRequest.getOperator().isBlank() || (!booleanRequest.getOperator().toLowerCase().equals("and")) && !booleanRequest.getOperator().toLowerCase().equals("or")) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
