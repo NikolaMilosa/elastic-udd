@@ -11,15 +11,12 @@ import lombok.NoArgsConstructor;
 @Document(indexName = "letter")
 @Data
 @NoArgsConstructor
-public class Letter {
+public class Letter extends Highlighted{
     @Id
     private String id;
 
     @Field(type = FieldType.Nested, includeInParent = true)
     private Client client;
-
-    @Field(type = FieldType.Text, analyzer = "english")
-    private String content;
 
     @Field(type = FieldType.Keyword, index = false, store = true)
     private Long letterId;

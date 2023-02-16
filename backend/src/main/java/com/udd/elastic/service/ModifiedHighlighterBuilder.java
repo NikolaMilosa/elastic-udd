@@ -10,7 +10,7 @@ public class ModifiedHighlighterBuilder {
         return new HighlightBuilder()
             .highlighterType("plain")
             .field(field)
-            .preTags("<b>")
-            .postTags("</b>");
+            .preTags("<strong>")
+            .postTags("</strong>");
     } 
 }

@@ -12,6 +12,7 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.stereotype.Service;
 
 import com.udd.elastic.contract.AdvancedSearchRequest;
+import com.udd.elastic.model.Highlighted;
 
 @Service
 public class AdvancedQueryService {
@@ -24,7 +25,7 @@ public class AdvancedQueryService {
         this.highlighterBuilder = highlighterBuilder;
     }
 
-    public <T> List<T> query(Class<T> type, AdvancedSearchRequest request, int page) {
+    public <T extends Highlighted> List<T> query(Class<T> type, AdvancedSearchRequest request, int page) {
         
         var query = QueryBuilders.boolQuery();
         for (var field : request.getQuery()){
@@ -50,7 +51,13 @@ public class AdvancedQueryService {
         var found = new ArrayList<T>();
 
         for(var hint : hints){
-            found.add(hint.getContent());
+            var content = hint.getContent();
+            for (var highlight : hint.getHighlightFields().get("content")){
+                var holder = highlight.replaceAll("<strong>", "").replaceAll("</strong>", "");
+                content.setContent(content.getContent().replace(holder, highlight));
+            }
+
+            found.add(content);
         }
 
         return found;

@@ -18,10 +18,10 @@ public class Client {
     @Id
     private String id;
     
-    @Field(type = FieldType.Text, searchAnalyzer = "english", analyzer = "english", store = true)
+    @Field(type = FieldType.Text, searchAnalyzer = "serbian", analyzer = "serbian", store = true)
     private String firstname;
 
-    @Field(type = FieldType.Text, searchAnalyzer = "english", analyzer = "english", store = true)
+    @Field(type = FieldType.Text, searchAnalyzer = "serbian", analyzer = "serbian", store = true)
     private String lastname;
 
     @Field(type = FieldType.Text, index = false, store = true)

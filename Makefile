@@ -31,11 +31,6 @@ COMMA:= ,
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-.PHONY: build-backend
-build-backend: ## Builds and compiles backend
-	cd ./backend
-	./mvnw compile
-
 .PHONY: up
 up: ## Runs the elastic search container with kibana
 	$(CONTAINER_TOOL)-compose -f docker-compose.yaml up
@@ -48,3 +43,7 @@ down: ## Removes the containers
 run: ## Run the backend
 	cd ./backend
 	./mvnw spring-boot:run
+
+.PHONY: build-image
+build-image: ## Build elastic image
+	$(CONTAINER_TOOL) build -t elastic -f elastic.dockerfile .
