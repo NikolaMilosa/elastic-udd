@@ -9,11 +9,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.udd.elastic.configuration.LocationHttpClient;
 import com.udd.elastic.contract.AdvancedSearchRequest;
+import com.udd.elastic.contract.LocationSearchRequest;
 import com.udd.elastic.model.CV;
 import com.udd.elastic.model.Client;
 import com.udd.elastic.model.Letter;
 import com.udd.elastic.service.AdvancedQueryService;
+import com.udd.elastic.service.LocationQueryService;
 import com.udd.elastic.service.SimpleQueryService;
 import com.udd.elastic.validator.EducationValidator;
 
@@ -24,12 +27,17 @@ public class QueryController {
     final EducationValidator educationValidator;
     final SimpleQueryService simpleQueryService;
     final AdvancedQueryService advancedQueryService;
+    final LocationHttpClient locationHttpClient;
+    final LocationQueryService locationQueryService;
 
     @Autowired
-    public QueryController(EducationValidator validator, SimpleQueryService simpleQueryService, AdvancedQueryService advancedQueryService) {
+    public QueryController(EducationValidator validator, SimpleQueryService simpleQueryService, AdvancedQueryService advancedQueryService,
+        LocationHttpClient locationHttpClient, LocationQueryService locationQueryService) {
         this.educationValidator = validator;
         this.simpleQueryService = simpleQueryService;
         this.advancedQueryService = advancedQueryService;
+        this.locationHttpClient = locationHttpClient;
+        this.locationQueryService = locationQueryService;
     }
     
     @GetMapping("/firstname/{firstname}/{page}")
@@ -83,6 +91,20 @@ public class QueryController {
         return ResponseEntity.ok(advancedQueryService.query(Letter.class, request, page));
     }
 
+    @PostMapping("/location/{page}")
+    public ResponseEntity<?> queryLocation(@PathVariable(name = "page") int page, @RequestBody LocationSearchRequest request){
+        if (!validateLocationRequest(request)) {
+            return ResponseEntity.badRequest().body("Invalid request");
+        }
+
+        var response = locationHttpClient.getLocationFromAddress(request.getCity());
+        if (response == null) {
+            return ResponseEntity.badRequest().body("Couldn't resolve address to coordinates");
+        }
+
+        return ResponseEntity.ok(locationQueryService.query(response, request.getRadius(), request.getUnit(), page));
+    }
+
     private boolean validateAdvancedRequest(AdvancedSearchRequest request){
         if (request == null || request.query == null || request.query.isEmpty()){
             return false;
@@ -97,5 +119,11 @@ public class QueryController {
         }
 
         return true;
+    }
+
+    private boolean validateLocationRequest(LocationSearchRequest request){
+        return !(request == null || request.getCity() == null || request.getCity().isBlank() ||
+            request.getRadius() == null || request.getRadius() < 0 ||
+            request.getUnit() == null || request.getUnit().isBlank());
     }
 }
