@@ -15,9 +15,11 @@ import com.udd.elastic.contract.LocationSearchRequest;
 import com.udd.elastic.model.CV;
 import com.udd.elastic.model.Client;
 import com.udd.elastic.model.Letter;
+import com.udd.elastic.model.Log;
 import com.udd.elastic.service.AdvancedQueryService;
 import com.udd.elastic.service.LocationQueryService;
 import com.udd.elastic.service.SimpleQueryService;
+import com.udd.elastic.service.StatisticsService;
 import com.udd.elastic.validator.EducationValidator;
 
 @RestController
@@ -29,15 +31,17 @@ public class QueryController {
     final AdvancedQueryService advancedQueryService;
     final LocationHttpClient locationHttpClient;
     final LocationQueryService locationQueryService;
+    final StatisticsService statisticsService;
 
     @Autowired
     public QueryController(EducationValidator validator, SimpleQueryService simpleQueryService, AdvancedQueryService advancedQueryService,
-        LocationHttpClient locationHttpClient, LocationQueryService locationQueryService) {
+        LocationHttpClient locationHttpClient, LocationQueryService locationQueryService, StatisticsService statisticsService) {
         this.educationValidator = validator;
         this.simpleQueryService = simpleQueryService;
         this.advancedQueryService = advancedQueryService;
         this.locationHttpClient = locationHttpClient;
         this.locationQueryService = locationQueryService;
+        this.statisticsService = statisticsService;
     }
     
     @GetMapping("/firstname/{firstname}/{page}")
@@ -103,6 +107,11 @@ public class QueryController {
         }
 
         return ResponseEntity.ok(locationQueryService.query(response, request.getRadius(), request.getUnit(), page));
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<?> getStatistics() {
+        return ResponseEntity.ok(statisticsService.getStatistics());
     }
 
     private boolean validateAdvancedRequest(AdvancedSearchRequest request){

@@ -44,6 +44,15 @@ run: ## Run the backend
 	cd ./backend
 	./mvnw spring-boot:run
 
-.PHONY: build-image
-build-image: ## Build elastic image
+.PHONY: build-image-elastic
+build-image-elastic: ## Build elastic image
 	$(CONTAINER_TOOL) build -t elastic -f elastic.dockerfile .
+
+.PHONY: build-image-randomizer
+build-image-randomizer: ## Build randomizer image
+	$(CONTAINER_TOOL) build -t randomizer -f ./randomizer/randomizer.dockerfile ./randomizer
+
+.PHONY: py-script
+py-script: ## Run a script that populates with random outcomes to statistics
+	cd ./randomizer
+	pipenv run python script.py
