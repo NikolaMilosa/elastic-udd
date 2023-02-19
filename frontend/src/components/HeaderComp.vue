@@ -2,7 +2,10 @@
     <div class="header">
         <button class="header-option header-home" @click="this.callback('home')">Home</button>
         <button class="header-option header-document" @click="this.callback('upload')">Upload</button>
-        <button class="header-option header-query" @click="this.callback('query')">Query</button>
+        <button class="header-option header-query" @click="this.callback('query_users')">Users</button>
+        <button class="header-option header-query" @click="this.callback('query_cv')">CV</button>
+        <button class="header-option header-query" @click="this.callback('query_letter')">Letter</button>
+        <button class="header-option header-query" @click="this.callback('query_geoloc')">Geoloc</button>
     </div>
 </template>
   

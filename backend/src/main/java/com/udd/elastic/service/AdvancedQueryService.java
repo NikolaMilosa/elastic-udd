@@ -7,7 +7,9 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +28,23 @@ public class AdvancedQueryService {
     }
 
     public <T extends Highlighted> List<T> query(Class<T> type, AdvancedSearchRequest request, int page) {
-        
+        var query = getQueryBuilder(request);
+
+        var nativeQuery = getHighlightableQuery(query, page);
+
+        var hints = elasticsearchOperations.search(nativeQuery, type, IndexCoordinates.of(type.getSimpleName().toLowerCase()));
+        return getWithHighlighting(hints);
+    }
+
+    public <T extends Object> List<T> queryWithoutHighlihghitng(Class<T> type, AdvancedSearchRequest request, int page) {
+        var query = getQueryBuilder(request);
+        var nativeQuery = getNonHighlightableQuery(query, page);
+
+        var hints = elasticsearchOperations.search(nativeQuery, type, IndexCoordinates.of(type.getSimpleName().toLowerCase()));
+        return getWithoutHighlighting(hints);
+    }
+
+    private QueryBuilder getQueryBuilder(AdvancedSearchRequest request){
         var query = QueryBuilders.boolQuery();
         for (var field : request.getQuery()){
             QueryBuilder matcher = field.isPhraze() 
@@ -40,26 +58,48 @@ public class AdvancedQueryService {
                 query.should(matcher);
             }
         }
+        return query;
+    }
 
-        var nativeQuery = new NativeSearchQueryBuilder()
+    private NativeSearchQuery getHighlightableQuery(QueryBuilder query, int page){
+        return new NativeSearchQueryBuilder()
             .withQuery(query)
             .withHighlightBuilder(highlighterBuilder.getBuilder("content"))
             .withPageable(PageRequest.of(page, 10))
             .build();
+    }
 
-        var hints = elasticsearchOperations.search(nativeQuery, type, IndexCoordinates.of(type.getSimpleName().toLowerCase()));
-        var found = new ArrayList<T>();
+    private NativeSearchQuery getNonHighlightableQuery(QueryBuilder query, int page){
+        return new NativeSearchQueryBuilder()
+            .withQuery(query)
+            .withPageable(PageRequest.of(page, 10))
+            .build();
+    }
+
+    private <T extends Object> List<T> getWithoutHighlighting(SearchHits<T> hints){
+        var ret = new ArrayList<T>();
+
+        for(var hint : hints){
+            var content = hint.getContent();
+            ret.add(content);
+        }
+
+        return ret;
+    }
+
+    private <T extends Highlighted> List<T> getWithHighlighting(SearchHits<T> hints){
+        var ret = new ArrayList<T>();
 
         for(var hint : hints){
             var content = hint.getContent();
             for (var highlight : hint.getHighlightFields().get("content")){
-                var holder = highlight.replaceAll("<strong>", "").replaceAll("</strong>", "");
+                var holder = highlight.replaceAll(highlighterBuilder.getPreTag(), "").replaceAll(highlighterBuilder.getPostTag(), "");
                 content.setContent(content.getContent().replace(holder, highlight));
             }
 
-            found.add(content);
+            ret.add(content);
         }
 
-        return found;
+        return ret;
     }
 }

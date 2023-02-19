@@ -2,22 +2,31 @@
   <HeaderComp :callback="change"/>
   <HomeComp v-if="page == 'home'"/>
   <UploadComp v-if="page == 'upload'"/>
-  <QueryComp v-if="page == 'query'"/>
+  <QueryUsersComp v-if="page == 'query_users'"/>
+  <QueryCvComp v-if="page == 'query_cv'"/>
+  <QueryLetterComp v-if="page == 'query_letter'"/>
+  <QueryGeolocComp v-if="page == 'query_geoloc'"/>
 </template>
 
 <script>
 import HeaderComp from './components/HeaderComp.vue'
 import HomeComp from './components/HomeComp.vue'
 import UploadComp from './components/UploadComp.vue'
-import QueryComp from './components/QueryComp.vue'
+import QueryUsersComp from './components/QueryUsersComp.vue'
+import QueryCvComp from './components/QueryCvComp.vue'
+import QueryLetterComp from './components/QueryLetterComp.vue'
+import QueryGeolocComp from './components/QueryGeolocComp.vue'
 
 export default {
   name: 'App',
   components: {
     HeaderComp,
     HomeComp,
-    QueryComp,
-    UploadComp
+    QueryUsersComp,
+    UploadComp,
+    QueryCvComp,
+    QueryLetterComp,
+    QueryGeolocComp
   },
   data() {
     return {

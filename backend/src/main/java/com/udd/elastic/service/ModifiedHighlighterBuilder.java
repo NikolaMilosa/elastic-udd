@@ -10,7 +10,14 @@ public class ModifiedHighlighterBuilder {
         return new HighlightBuilder()
             .highlighterType("plain")
             .field(field)
-            .preTags("<strong>")
-            .postTags("</strong>");
+            .preTags(getPreTag())
+            .postTags(getPostTag());
     } 
+
+    public String getPreTag() {
+        return "<span style='background-color: yellow'>";
+    }
+    public String getPostTag() {
+        return "</span>";
+    }
 }

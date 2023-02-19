@@ -77,6 +77,15 @@ public class QueryController {
         return simpleQueryService.query(Letter.class, "content", query, page);
     }
 
+    @PostMapping("/advanced/{page}/client")
+    public ResponseEntity<?> queryAdvancedClient(@PathVariable(name = "page") int page, @RequestBody AdvancedSearchRequest request){
+        if (!validateAdvancedRequest(request)){
+            return ResponseEntity.badRequest().body("Invalid request");
+        }
+
+        return ResponseEntity.ok(advancedQueryService.queryWithoutHighlihghitng(Client.class, request, page));
+    }
+
     @PostMapping("/advanced/{page}/cv")
     public ResponseEntity<?> queryAdvancedCV(@PathVariable(name = "page") int page, @RequestBody AdvancedSearchRequest request){
         if (!validateAdvancedRequest(request)){

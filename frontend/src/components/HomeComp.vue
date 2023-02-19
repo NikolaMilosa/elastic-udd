@@ -9,21 +9,21 @@
         <div class="leaderboard">
             <div class="column">
                 <div class="bar third">
-                    <p>{{ places[2].value }}</p>
+                    <p>{{ places.length >= 3 ? places[2].value : '' }}</p>
                 </div>
-                <p>{{ places[2].name }}</p>
+                <p>{{ places.length >= 3 ? places[2].name : '' }}</p>
             </div>
             <div class="column">
                 <div class="bar first">
-                    <p>{{ places[0].value }}</p>
+                    <p>{{ places.length >= 1 ? places[0].value : '' }}</p>
                 </div>
-                <p>{{ places[0].name }}</p>
+                <p>{{ places.length >= 1 ? places[0].name : '' }}</p>
             </div>
             <div class="column">
                 <div class="bar second">
-                    <p>{{ places[1].value }}</p>
+                    <p>{{ places.length >= 2 ? places[1].value : '' }}</p>
                 </div>
-                <p>{{ places[1].name }}</p>
+                <p>{{ places.length >= 2 ? places[1].name : '' }}</p>
             </div>
         </div>
     </div>
