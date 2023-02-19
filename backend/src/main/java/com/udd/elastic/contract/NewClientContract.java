@@ -24,4 +24,8 @@ public class NewClientContract implements Serializable {
     private String phone;
     
     private String education;
+
+    public String stringify() {
+        return firstname + ", " + lastname + ", " + email + ", " + address + ", " + cv.getSize() + ", " + letter.getSize() + ", " + phone + ", " + education;
+    }
 }

@@ -56,3 +56,8 @@ build-image-randomizer: ## Build randomizer image
 py-script: ## Run a script that populates with random outcomes to statistics
 	cd ./randomizer
 	pipenv run python script.py
+
+.PHONY: serve
+serve: ## Serve frontend on 8081
+	cd ./frontend
+	npm run serve -- --port 8081

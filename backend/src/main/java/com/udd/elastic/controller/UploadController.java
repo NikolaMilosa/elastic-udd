@@ -2,6 +2,7 @@ package com.udd.elastic.controller;
 
 import org.elasticsearch.common.geo.GeoPoint;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,8 +34,9 @@ public class UploadController {
         this.locationHttpClient = locationHttpClient;
     }
 
-    @PostMapping
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<?> upload(@ModelAttribute NewClientContract contract) {
+        System.out.println(contract.stringify());
         if (!validateContract(contract)){
             return ResponseEntity.badRequest().body("Invalid request");
         }
