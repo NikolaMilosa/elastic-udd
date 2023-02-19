@@ -16,8 +16,8 @@
                 <div>
                     <span>Operator:</span>
                     <select v-model="current.operator">
-                        <option value="and">AND</option>
-                        <option value="or">OR</option>
+                        <option value="and">MUST</option>
+                        <option value="or">SHOULD</option>
                     </select>
                 </div>
                 <div style="width: 100px;">
@@ -108,10 +108,9 @@ export default {
             this.query_string = "";
 
             for (let elem of this.query) {
-                if (elem.phraze){
-                    this.query_string += '*'
-                }
-                this.query_string += "(" + elem.field + ":" + elem.value + ") " + elem.operator + " "; 
+                this.query_string += (elem.operator == 'and' ? 'must ' : 'should ') + 
+                    (elem.phraze ? '*' : '') +
+                    "(" + elem.field + ":" + elem.value + ") "; 
             }
             let parts = this.query_string.split(' ');
             this.query_string = parts.join(' ');
